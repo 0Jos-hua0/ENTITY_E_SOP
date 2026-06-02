@@ -18,7 +18,7 @@ export default function ConsumerDashboard() {
       })
       .then(data => {
         const list = Array.isArray(data) ? data : data.items || data.entities || [];
-        setProjects(list);
+        setProjects(list.filter(p => p.methodology === 'SOP_INSTANCE'));
       })
       .catch(console.error)
       .finally(() => setLoading(false));

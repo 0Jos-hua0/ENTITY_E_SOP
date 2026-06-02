@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function AdminDashboard() {
   const router = useRouter();
   const [projects, setProjects] = useState([]);
+  const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Modal State
@@ -24,7 +25,9 @@ export default function AdminDashboard() {
       .then(data => {
         const list = Array.isArray(data) ? data : data.items || data.entities || [];
         const templates = list.filter(p => p.methodology === 'SOP_TEMPLATE');
+        const insts = list.filter(p => p.methodology === 'SOP_INSTANCE');
         setProjects(templates);
+        setInstances(insts);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -210,6 +213,51 @@ export default function AdminDashboard() {
                 <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">{p.name || p.displayId}</h3>
                 <p className="text-sm text-gray-500 line-clamp-2 mt-2 flex-1">
                   {p.description || 'No description provided.'}
+                </p>
+                <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400 font-mono">
+                  ID: {p.id.split('-')[0]}...
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mb-8 mt-16">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">SOP Instances (Pending Publication)</h2>
+            <p className="text-gray-500 text-sm mt-1">Review approved content from SMEs and publish to consumers.</p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="text-gray-500">Loading instances...</div>
+        ) : instances.length === 0 ? (
+          <div className="text-center py-16 bg-white border border-gray-200 border-dashed rounded-xl">
+            <h3 className="text-lg font-medium text-gray-900 mb-1">No Active Instances</h3>
+            <p className="text-gray-500 text-sm mb-4">SMEs haven't created any SOP instances yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {instances.map(p => (
+              <div 
+                key={p.id}
+                onClick={() => handleSelectProject(p)}
+                className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-[#e13f00] transition-all cursor-pointer group flex flex-col h-48"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xl">
+                    {p.name ? p.name.charAt(0).toUpperCase() : 'I'}
+                  </div>
+                  <button 
+                    onClick={(e) => handleDeleteProject(p.id, e)}
+                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                  >
+                    🗑
+                  </button>
+                </div>
+                <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">{p.name || p.displayId}</h3>
+                <p className="text-sm text-gray-500 line-clamp-2 mt-2 flex-1">
+                  {p.description || 'Active SOP Instance'}
                 </p>
                 <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400 font-mono">
                   ID: {p.id.split('-')[0]}...
