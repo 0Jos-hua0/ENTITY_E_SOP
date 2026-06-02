@@ -6,7 +6,9 @@ import StatusBadge from '../shared/StatusBadge';
 export default function EntityTree({ projectId, onSelectEntity, selectedEntityId }) {
   const [roots, setRoots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const role = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ktern_role') : null;
+  const rawRole = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ktern_role') : null;
+  const role = rawRole ? rawRole.toLowerCase() : null;
+  const canEditTree = role === 'admin' || role === 'sme';
 
   useEffect(() => {
     if (!projectId) return;
@@ -77,7 +79,7 @@ export default function EntityTree({ projectId, onSelectEntity, selectedEntityId
   if (!roots.length) return (
     <div className="p-4 text-sm text-gray-500 text-center mt-4">
       No content found.<br/>
-      {role === 'Admin' && (
+      {canEditTree && (
         <button onClick={handleAddRoot} className="text-[#e13f00] hover:underline mt-2">+ Create Root Node</button>
       )}
     </div>
@@ -92,17 +94,17 @@ export default function EntityTree({ projectId, onSelectEntity, selectedEntityId
           projectId={projectId} 
           onSelectEntity={onSelectEntity}
           selectedEntityId={selectedEntityId}
-          role={role}
+          canEditTree={canEditTree}
         />
       ))}
-      {role === 'Admin' && (
+      {canEditTree && (
         <button onClick={handleAddRoot} className="text-xs text-gray-500 hover:text-[#e13f00] mt-4 ml-2">+ Add Root</button>
       )}
     </div>
   );
 }
 
-function TreeNode({ node, projectId, onSelectEntity, selectedEntityId, role }) {
+function TreeNode({ node, projectId, onSelectEntity, selectedEntityId, canEditTree }) {
   const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -270,7 +272,7 @@ function TreeNode({ node, projectId, onSelectEntity, selectedEntityId, role }) {
         {node.status && <StatusBadge status={node.status} />}
         
         {/* Add Child Button */}
-        {(role === 'SME' || role === 'Admin') && (
+        {canEditTree && (
           <button 
             onClick={handleAddChild}
             className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-[#e13f00] px-1 text-xs transition-opacity"
@@ -281,7 +283,7 @@ function TreeNode({ node, projectId, onSelectEntity, selectedEntityId, role }) {
         )}
         
         {/* Delete Node Button */}
-        {role === 'Admin' && (
+        {canEditTree && (
           <button 
             onClick={handleDelete}
             className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 px-1 text-xs transition-opacity"
@@ -301,7 +303,7 @@ function TreeNode({ node, projectId, onSelectEntity, selectedEntityId, role }) {
               projectId={projectId} 
               onSelectEntity={onSelectEntity}
               selectedEntityId={selectedEntityId}
-              role={role}
+              canEditTree={canEditTree}
             />
           ))}
         </div>

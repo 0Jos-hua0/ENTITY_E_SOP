@@ -7,7 +7,20 @@ export default function EntityDetail({ entity, role, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [projectId, setProjectId] = useState(null);
   const [fullEntityType, setFullEntityType] = useState(null);
+  const [fullEntity, setFullEntity] = useState(null);
   
+  const fetchEntityDetails = async (pid, eid) => {
+    try {
+      const res = await fetch(`/api/projects/${pid}/entities/${eid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setFullEntity(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch full entity', err);
+    }
+  };
+
   useEffect(() => {
     const pid = sessionStorage.getItem('ktern_project_id');
     setProjectId(pid);
@@ -21,8 +34,12 @@ export default function EntityDetail({ entity, role, onSaved }) {
           setFullEntityType(matchedType);
         })
         .catch(console.error);
+
+      // Fetch fresh entity data to get updated values
+      fetchEntityDetails(pid, entity.id);
     } else {
       setFullEntityType(null);
+      setFullEntity(null);
     }
   }, [entity]);
 
@@ -33,8 +50,8 @@ export default function EntityDetail({ entity, role, onSaved }) {
     </div>
   );
 
-  const vals = entity.values || {};
-  const status = entity.status || 'draft';
+  const vals = fullEntity?.values || entity.values || {};
+  const status = fullEntity?.status || entity.status || 'draft';
   const typeName = entity.entityType?.name || entity.typeId || 'Entity';
   const canEdit = role === 'sme';
 
@@ -48,6 +65,7 @@ export default function EntityDetail({ entity, role, onSaved }) {
         body: JSON.stringify({ status: newStatus })
       });
       alert(`Status successfully updated to ${newStatus}`);
+      await fetchEntityDetails(projectId, entity.id);
       if (onSaved) onSaved();
     } catch (err) {
       console.error(err);
@@ -69,7 +87,7 @@ export default function EntityDetail({ entity, role, onSaved }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ values: { [attrKey]: value } })
       });
-      alert('Field saved successfully!');
+      await fetchEntityDetails(projectId, entity.id);
       if (onSaved) onSaved();
     } catch (err) {
       console.error(err);
@@ -151,7 +169,7 @@ export default function EntityDetail({ entity, role, onSaved }) {
   };
 
   const globalAttributes = fullEntityType?.attributes?.filter(a => a.name !== 'content' && a.name !== 'name' && a.name !== 'title') || [];
-  const nodeAttributes = entity.values?.custom_attributes_schema || [];
+  const nodeAttributes = fullEntity?.values?.custom_attributes_schema || entity.values?.custom_attributes_schema || [];
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-[#F8FAFC]">
